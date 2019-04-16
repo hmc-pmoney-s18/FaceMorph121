@@ -319,12 +319,8 @@ def makeMorph(imageFileName1, imageFileName2):
         # Morph one triangle at a time.
         morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
     fileName = os.path.basename(imageFileName1).split(".")[0] + os.path.basename(imageFileName2)
-    #fileName= fileName + ".jpg"
-    if (os.path.exists("pascal.jpg")):
-        os.remove("pascal.jpg")
-    path = os.path.basename("app")
-    finalPath = os.path.join(path, fileName)
-    returnValue = cv2.imwrite(finalPath, imgMorph)
+    
+    returnValue = cv2.imwrite(fileName, imgMorph)
 
     if (returnValue):
 
