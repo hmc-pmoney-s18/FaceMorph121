@@ -2,7 +2,7 @@
 #Most of this code is clone from learn opencv github repo
 #import sys
 #import triangles
-import cv2
+from cv2 import imwrite, imread, imdecode, getAffineTransform, resize, warpAffine, Subdiv2D, boundingRect, fillConvexPoly, INTER_LINEAR, BORDER_REFLECT_101
 import numpy as np
 # import facePoints
 import sys
@@ -19,13 +19,13 @@ from werkzeug.utils import secure_filename
 
 def doCropping(theImage1,theImage2):
     if(isinstance(theImage1,str)):
-        img1=cv2.imread(theImage1)
+        img1=imread(theImage1)
     else:
-        img1=cv2.imdecode(np.fromstring(theImage1.read(), np.uint8),1)
+        img1=imdecode(np.fromstring(theImage1.read(), np.uint8),1)
     if(isinstance(theImage2,str)):
-        img2=cv2.imread(theImage2)
+        img2=imread(theImage2)
     else:
-        img2=cv2.imdecode(np.fromstring(theImage2.read(), np.uint8),1)
+        img2=imdecode(np.fromstring(theImage2.read(), np.uint8),1)
     size1=img1.shape
     size2=img2.shape
     diff0=(size1[0]-size2[0])//2
@@ -39,17 +39,17 @@ def doCropping(theImage1,theImage2):
     #     scale0=size1[0]/size2[0]
     #     scale1=size1[1]/size2[1]
     #     if(scale0>scale1):
-    #         res=cv2.resize(img2,size1,img1, scale0,scale0,interpolation=cv2.INTER_AREA)
+    #         res=resize(img2,size1,img1, scale0,scale0,interpolation=INTER_AREA)
     #     else:
-    #         res=cv2.resize(img2,size1, img1,scale1,scale1,interpolation=cv2.INTER_AREA)
+    #         res=resize(img2,size1, img1,scale1,scale1,interpolation=INTER_AREA)
     #     return doCroppingHelp(img1,res)
     # elif(size1[0]>=size2[0] and size1[1]>=size2[1]):
     #     scale0=size2[0]/size1[0]
     #     scale1=size2[1]/size1[1]
     #     if(scale0>scale1):
-    #         res=cv2.resize(img1,img2, size2,scale0,scale0,interpolation=cv2.INTER_AREA)
+    #         res=resize(img1,img2, size2,scale0,scale0,interpolation=INTER_AREA)
     #     else:
-    #         res=cv2.resize(img1,img2, size2,scale1,scale1,interpolation=cv2.INTER_AREA)
+    #         res=resize(img1,img2, size2,scale1,scale1,interpolation=INTER_AREA)
     #     return doCroppingHelp(res,img2)
     # elif(size1[0]>=size2[0] and size1[1]<=size2[1]):
     #     return [img1[diff0:avg0,:],img2[:,-diff1:avg1]]
@@ -82,7 +82,7 @@ def makeCorrespondence(thePredictor,theImage1,theImage2):
     predictor = dlib.shape_predictor(predictor_path)
 
     # Setting up some initial values.
-    #theImage1 = cv2.cvtColor(theim)
+    #theImage1 = cvtColor(theim)
     array = np.zeros((68,2))
     size=(0,0)
     imgList= [theImage1, theImage2]
@@ -178,7 +178,7 @@ def makeDelaunay(image, listOfPoints):
     size = image.shape
     rect = (0, 0, size[0], size[0])
     # Create an instance of Subdiv2D.
-    subdiv = cv2.Subdiv2D(rect)
+    subdiv = Subdiv2D(rect)
 
     # Make a points list and a searchable dictionary. 
     theList= listOfPoints
@@ -195,27 +195,27 @@ def makeDelaunay(image, listOfPoints):
     return draw_delaunay(subdiv,dictionary, rect)
 
 
-# Read points from text file
-def readPoints(path) :
-    # Create an array of points.
-    # points = []
-    # # Read points
-    # with open(path) as file :
-    #     for line in file :
-    #         x, y = line.split()
-    #         points.append((int(x), int(y)))
+# # Read points from text file
+# def readPoints(path) :
+#     # Create an array of points.
+#     # points = []
+#     # # Read points
+#     # with open(path) as file :
+#     #     for line in file :
+#     #         x, y = line.split()
+#     #         points.append((int(x), int(y)))
 
-    return points
+#     return points
 
 # Apply affine transform calculated using srcTri and dstTri to src and
 # output an image of size.
 def applyAffineTransform(src, srcTri, dstTri, size) :
     
     # Given a pair of triangles, find the affine transform.
-    warpMat = cv2.getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
+    warpMat = getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
     
     # Apply the Affine Transform just found to the src image
-    dst = cv2.warpAffine( src, warpMat, (size[0], size[1]), None, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101 )
+    dst = warpAffine( src, warpMat, (size[0], size[1]), None, flags=INTER_LINEAR, borderMode=BORDER_REFLECT_101 )
 
     return dst
 
@@ -224,9 +224,9 @@ def applyAffineTransform(src, srcTri, dstTri, size) :
 def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
 
     # Find bounding rectangle for each triangle
-    r1 = cv2.boundingRect(np.float32([t1]))
-    r2 = cv2.boundingRect(np.float32([t2]))
-    r = cv2.boundingRect(np.float32([t]))
+    r1 = boundingRect(np.float32([t1]))
+    r2 = boundingRect(np.float32([t2]))
+    r = boundingRect(np.float32([t]))
 
 
     # Offset points by left top corner of the respective rectangles
@@ -243,7 +243,7 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
 
     # Get mask by filling triangle
     mask = np.zeros((r[3], r[2], 3), dtype = np.float32)
-    cv2.fillConvexPoly(mask, np.int32(tRect), (1.0, 1.0, 1.0), 16, 0)
+    fillConvexPoly(mask, np.int32(tRect), (1.0, 1.0, 1.0), 16, 0)
 
     # Apply warpImage to small rectangular patches
     img1Rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
@@ -271,11 +271,11 @@ def makeMorph(imageFileName1, imageFileName2):
     filename1 = imageFileName1
     filename2 = imageFileName2
     alpha = 0.5
-    img1 = cv2.imread(filename1)
-    img2 = cv2.imread(filename2)
+    img1 = imread(filename1)
+    img2 = imread(filename2)
 
-    img1 = cv2.resize(img1,(600,800))
-    img2 = cv2.resize(img2,(600,800))
+    img1 = resize(img1,(600,800))
+    img2 = resize(img2,(600,800))
 
     # size1 = img1.shape
     # size2 = img2.shape
@@ -320,7 +320,7 @@ def makeMorph(imageFileName1, imageFileName2):
         morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
     fileName = os.path.basename(imageFileName1).split(".")[0] + os.path.basename(imageFileName2)
     
-    returnValue = cv2.imwrite(fileName, imgMorph)
+    returnValue = imwrite(fileName, imgMorph)
 
     if (returnValue):
 
