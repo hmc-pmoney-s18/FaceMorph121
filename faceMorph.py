@@ -330,7 +330,4 @@ def makeMorph(imageFileName1, imageFileName2):
 
         return "morphedimage.jpg"
     
-    # return np.uint8(imgMorph)
 
-    # # cv2.imshow("Morphed Face", np.uint8(imgMorph))
-    # # cv2.waitKey(0)
