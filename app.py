@@ -1,9 +1,18 @@
 #hopefully this works
-from flask import render_template, redirect, url_for, request, send_from_directory, flash, send_file
-from app import app
+from flask import Flask, render_template, redirect, url_for, request, send_from_directory, flash, send_file
+import flask
 import os
 from werkzeug import secure_filename
-from app import faceMorph
+import faceMorph
+
+
+from flask import Flask
+from config import Config
+
+app = Flask(__name__, static_url_path='')
+app.config.from_object(Config)
+
+
 
 @app.route('/<filename>', methods = ['GET'])
 def get_file(filename):
