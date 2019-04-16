@@ -50,7 +50,7 @@ def upload_file():
             Morph_result= faceMorph.makeMorph(save_to1,save_to2)
             #print(filename1)
             
-            return render_template('displayResult.html', morph= Morph_result, filename = Morph_result)
+            return render_template('index.html', morph= Morph_result, filename = Morph_result, f1 =filename1, f2= filename2)
             
     return render_template('index.html')
 
