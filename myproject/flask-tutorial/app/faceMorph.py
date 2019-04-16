@@ -5,12 +5,12 @@ import sys
 import cv2
 import numpy as np
 # import facePoints
-import sys
+# import sys
 import os
 import dlib
-import glob
+# import glob
 import numpy as np
-from skimage import io
+# from skimage import io
 
 from flask import Flask, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
