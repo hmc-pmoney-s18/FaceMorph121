@@ -1,0 +1,8 @@
+
+<!doctype html>
+<title>Cats</title>
+{% if morph %}
+<h2>{{ morph}}</h2>
+<!--<img src="{{ url_for('get_file', filename=filename) }}">-->
+<img src="{{ url_for('get_file', filename=filename) }}">
+{% endif %}
