@@ -1,82 +1,20 @@
-#!/usr/bin/env python
-#Most of this code is clone from learn opencv github repo
-#import sys
-#import triangles
+
 from cv2 import imwrite, imread, imdecode, getAffineTransform, resize, warpAffine, Subdiv2D, boundingRect, fillConvexPoly, INTER_LINEAR, BORDER_REFLECT_101
 import numpy as np
-# import facePoints
 import sys
 import os
 import dlib
 #import glob
 import numpy as np
-#from skimage import io
-
 from flask import Flask, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
 
 
-
-def doCropping(theImage1,theImage2):
-    if(isinstance(theImage1,str)):
-        img1=imread(theImage1)
-    else:
-        img1=imdecode(np.fromstring(theImage1.read(), np.uint8),1)
-    if(isinstance(theImage2,str)):
-        img2=imread(theImage2)
-    else:
-        img2=imdecode(np.fromstring(theImage2.read(), np.uint8),1)
-    size1=img1.shape
-    size2=img2.shape
-    diff0=(size1[0]-size2[0])//2
-    diff1=(size1[1]-size2[1])//2
-    avg0=(size1[0]+size2[0])//2
-    avg1=(size1[1]+size2[1])//2
-    if(size1[0]==size2[0] and size1[1]==size2[1]):
-        print("wow")
-        return [img1,img2]
-    # elif(size1[0]<=size2[0] and size1[1]<=size2[1]):
-    #     scale0=size1[0]/size2[0]
-    #     scale1=size1[1]/size2[1]
-    #     if(scale0>scale1):
-    #         res=resize(img2,size1,img1, scale0,scale0,interpolation=INTER_AREA)
-    #     else:
-    #         res=resize(img2,size1, img1,scale1,scale1,interpolation=INTER_AREA)
-    #     return doCroppingHelp(img1,res)
-    # elif(size1[0]>=size2[0] and size1[1]>=size2[1]):
-    #     scale0=size2[0]/size1[0]
-    #     scale1=size2[1]/size1[1]
-    #     if(scale0>scale1):
-    #         res=resize(img1,img2, size2,scale0,scale0,interpolation=INTER_AREA)
-    #     else:
-    #         res=resize(img1,img2, size2,scale1,scale1,interpolation=INTER_AREA)
-    #     return doCroppingHelp(res,img2)
-    # elif(size1[0]>=size2[0] and size1[1]<=size2[1]):
-    #     return [img1[diff0:avg0,:],img2[:,-diff1:avg1]]
-    # else:
-    #     return [img1[:,diff1:avg1],img2[-diff0:avg0,:]]
-
-def doCroppingHelp(img1,img2):
-    size1=img1.size
-    size2=img2.size
-    diff0=(size1[0]-size2[0])//2
-    diff1=(size1[1]-size2[1])//2
-    avg0=(size1[0]+size2[0])//2
-    avg1=(size1[1]+size2[1])//2
-    if(size1[0]==size2[0] and size1[1]==size2[1]):
-        return [img1,img2]
-    elif(size1[0]<=size2[0] and size1[1]<=size2[1]):
-        return [img1,img2[-diff0:avg0,-diff1:avg1]]
-    elif(size1[0]>=size2[0] and size1[1]>=size2[1]):
-        return [img1[diff0:avg0,diff1:avg1],img2]
-    elif(size1[0]>=size2[0] and size1[1]<=size2[1]):
-        return [img1[diff0:avg0,:],img2[:,-diff1:avg1]]
-    else:
-        return [img1[:,diff1:avg1],img2[-diff0:avg0,:]]
-
 def makeCorrespondence(thePredictor,theImage1,theImage2):
-
-    # Detect the points of face.
+    ''' Uses a dlib trained model to predict the coordinates features in input faces
+    input : a dlib trained model and two face images
+    output: two sets of points corresponding to the location of features like eyes and noses in the input images
+    '''
     predictor_path = thePredictor
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(predictor_path)
@@ -103,11 +41,7 @@ def makeCorrespondence(thePredictor,theImage1,theImage2):
         # will make everything bigger and allow us to detect more faces.
         # Also give error if face is not found.
         dets = detector(img, 1)
-        if(len(dets)==0):
-            if(isinstance(f,str)):
-                return [[0,f],0,0,0,0,0]
-            else:
-                return [[0,"No. "+str(j)],0,0,0,0,0]
+       
         j=j+1
 
         for k, d in enumerate(dets):
@@ -127,17 +61,8 @@ def makeCorrespondence(thePredictor,theImage1,theImage2):
             currList.append((size[1]-1,size[0]-1))
             currList.append(((size[1]-1)//2,(size[0]-1)//2))
 
-    narray=array/2
-    narray=np.append(narray,[[1,1]],axis=0)
-    narray=np.append(narray,[[size[1]-1,1]],axis=0)
-    narray=np.append(narray,[[(size[1]-1)//2,1]],axis=0)
-    narray=np.append(narray,[[1,size[0]-1]],axis=0)
-    narray=np.append(narray,[[1,(size[0]-1)//2]],axis=0)
-    narray=np.append(narray,[[(size[1]-1)//2,size[0]-1]],axis=0)
-    narray=np.append(narray,[[size[1]-1,size[0]-1]],axis=0)
-    narray=np.append(narray,[[(size[1]-1)//2,(size[0]-1)//2]],axis=0)
-
-    return [size,imgList[0],imgList[1],list1,list2,narray]
+   
+    return [list1,list2]
 
 def rect_contains(rect, point) :
     '''checks if a points is contains within the bounds
@@ -195,18 +120,6 @@ def makeDelaunay(image, listOfPoints):
     return draw_delaunay(subdiv,dictionary, rect)
 
 
-# # Read points from text file
-# def readPoints(path) :
-#     # Create an array of points.
-#     # points = []
-#     # # Read points
-#     # with open(path) as file :
-#     #     for line in file :
-#     #         x, y = line.split()
-#     #         points.append((int(x), int(y)))
-
-#     return points
-
 # Apply affine transform calculated using srcTri and dstTri to src and
 # output an image of size.
 def applyAffineTransform(src, srcTri, dstTri, size) :
@@ -262,11 +175,6 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
 
 def makeMorph(imageFileName1, imageFileName2):
 
-    # filename1 = 'kobe_bryant.jpg'
-    # filename2 = 'donald_trump.jpg'
-    # we will implemement this once our model is ready
-    # userInput = input("Input a morphing rate between 0 and 1:")
-    # alpha = float(userInput)
     # Read images
     filename1 = imageFileName1
     filename2 = imageFileName2
@@ -277,22 +185,14 @@ def makeMorph(imageFileName1, imageFileName2):
     img1 = resize(img1,(600,800))
     img2 = resize(img2,(600,800))
 
-    # size1 = img1.shape
-    # size2 = img2.shape
-
-    # if(size1[0]==size2[0] and size1[1]==size2[1]):
-    #     print("Hey")
     features = makeCorrespondence("predictor.dat",img1,img2)
+
     # Convert Mat to float data type
     img1 = np.float32(img1)
     img2 = np.float32(img2)
 
-    # Read array of corresponding points
-    # points1 = readPoints(filename1 + '.txt')
-    # points2 = readPoints(filename2 + '.txt')
-    #features = makeCorrespondence("shape_predictor_68_face_landmarks.dat",img1,img2)
-    points1 = features[3]
-    points2 = features[4]
+    points1 = features[0]
+    points2 = features[1]
     points = []
 
     # Compute weighted average point coordinates
