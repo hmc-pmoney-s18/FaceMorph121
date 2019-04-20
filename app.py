@@ -3,7 +3,7 @@ from flask import Flask, render_template, redirect, url_for, request, send_from_
 import flask
 import os
 from werkzeug import secure_filename
-import faceMorph
+# import faceMorph
 
 
 from flask import Flask
@@ -57,10 +57,11 @@ def upload_file():
             file2.save(save_to2)
             
             #need a if statement to coorperate with Morph botton(p.s need to get Morph botton work)
-            Morph_result= faceMorph.makeMorph(save_to1,save_to2)
+            # Morph_result= faceMorph.makeMorph(save_to1,save_to2)
+            Morph_result = "morphedimage.jpg"
             #print(filename1)
             
-            return render_template('index.html/about', morph= Morph_result, filename = Morph_result, f1=filename1, f2 =filename2)
+            return render_template('index.html#about', morph= Morph_result, filename = Morph_result, f1=filename1, f2 =filename2)
             
     return render_template('index.html')
 
