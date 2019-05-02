@@ -15,7 +15,7 @@ http://facemorph121.herokuapp.com/
 ## Frontend
 
 The frontend of the web app is made by `Index.html`, which is a one page html file located in template floder and constructs the wireframe of the web app.
-All of the css, js, and font files help to implement the index.html are located in static directory. This is benefical for flask api to locate the applied files.
+All of the css, js, and fonts files help to implement the index.html are located in static directory. This is benefical for flask api to locate the applied files.
 
 ## Controllor
 
@@ -41,29 +41,18 @@ Explain what these tests test and why
 Give an example
 ```
 
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [flask] - Mirco Web framework by Python
+* [heroku] - Platform to deply the application
 
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Shihao Lin** - *Frontend & controller work* - [hmc-fly-f18](https://github.com/hmc-fly-f18)
+* **Pascal Habineza** - *Backend & controller work* -[hmc-elephant-s18](https://github.com/hmc-elephant-s18)
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/hmc-elephant-s18/FaceMorph/contributors) who participated in this project.
 
 
 ## Acknowledgments
