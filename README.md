@@ -7,40 +7,31 @@ http://facemorph121.herokuapp.com/
 
 ## Prerequisites
 
-Flask
-OpenCV
-Dlib
-Heroku
+* Flask
+* OpenCV
+* Dlib
+* Heroku
 
-### Installing
+## Frontend
 
-A step by step series of examples that tell you how to get a development env running
+The frontend of the web app is made by `Index.html`, which is a one page html file located in template floder and constructs the wireframe of the web app.
+All of the css, js, and font files help to implement the index.html are located in static directory. This is benefical for flask api to locate the applied files.
 
-Say what the step will be
+## Controllor
 
-```
-Give the example
-```
+`app.py` is the control center for this web app. `app.py` takes the dynamic request from the frontend to recieve the uploaded image and selected morphed rate from the user and save in the local server. Then `app.py` pass the request to backend to form the morphed image. Once controller recieves the feedback from the backend. It makes a post request to the frontend.
 
-And repeat
+## Backend
 
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
+* `facemorph.py` is the main backend file, which handles the Image pre-pcocessing to get 68 facial landmarks and handles morphing process.
+* `predict.dat` contains the information about all of the weights we use for the CNN model to get 68 facial landmarks from the user input facial image.
 
 ## Running the tests
 
-Explain how to run the automated tests for this system
+Uploading the vague facial images or the images which contains non-human or multiple human faces to the webapp, which are unappropriate behaviors. The web app should return a error message correspondingly to warm the user to give out a correct input.
 
-### Break down into end to end tests
+### Some Invalid example
 
-Explain what these tests test and why
-
-```
-Give an example
-```
 
 ### And coding style tests
 
@@ -74,12 +65,17 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* Example programs for using dlib to detect facial landmarks http://dlib.net/face_landmark_detection.py.html
+
+* Facial landmarks with dlib OpenCV and Python https://www.pyimagesearch.com/2017/04/03/facial-landmarks-dlib-opencv-python/
+
+* Flask App main page http://flask.pocoo.org
+
+* Heroku App main page https://www.heroku.com
+
+* How to build a web application using Flask and deploy it to the cloud https://medium.freecodecamp.org/how-to-build-a-web-application-using-flask-and-deploy-it-to-the-cloud-3551c985e492
+
+* Depoly your Flask Application to Heroku https://medium.com/the-andela-way/deploying-your-flask-application-to-heroku-c99050bce8f9
