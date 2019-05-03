@@ -1,6 +1,6 @@
 # FaceMorph
 
-The web app allows users morph two faces into a new image of their combined face. This new face can be anywhere between the two faces, from 99% of one face to 99% of another. Users can currently upload images from their devices and select the morphed rate to morph.
+This is a web app that allows users morph two faces into a new image of their combined face. This new face can be anywhere between the two faces, from 99% of one face to 99% of another. Users can currently upload images from their devices and select the morphed rate to morph.
 
 ## The link to Web app
 http://facemorph121.herokuapp.com/
@@ -15,9 +15,9 @@ http://facemorph121.herokuapp.com/
 ## Frontend
 
 The frontend of the web app is made by `Index.html`, which is a one page html file located in template floder and constructs the wireframe of the web app.
-All of the css, js, and fonts files help to implement the index.html are located in static directory. This is benefical for flask api to locate the applied files.
+All of the css, js, and fonts files help style the index.html are located in static directory. This is benefical for flask api to locate the applied files.
 
-## Controllor
+## Controller
 
 `app.py` is the control center for this web app. `app.py` takes the dynamic request from the frontend to recieve the uploaded image and selected morphed rate from the user and save in the local server. Then `app.py` pass the request to backend to form the morphed image. Once controller recieves the feedback from the backend. It makes a post request to the frontend.
 
@@ -44,7 +44,7 @@ Give an example
 ## Built With
 
 * [flask] - Mirco Web framework by Python
-* [heroku] - Platform to deply the application
+* [heroku] - Platform to deploy the application
 
 
 ## Authors
@@ -64,6 +64,8 @@ See also the list of [contributors](https://github.com/hmc-elephant-s18/FaceMorp
 * Flask App main page http://flask.pocoo.org
 
 * Heroku App main page https://www.heroku.com
+
+* Face Landmarks detection model https://ibug.doc.ic.ac.uk/media/uploads/documents/sagonas_2016_imavis.pdf
 
 * How to build a web application using Flask and deploy it to the cloud https://medium.freecodecamp.org/how-to-build-a-web-application-using-flask-and-deploy-it-to-the-cloud-3551c985e492
 
