@@ -1,333 +1,235 @@
-#!/usr/bin/env python
-#Most of this code is clone from learn opencv github repo
-#import sys
-#import triangles
-from cv2 import imwrite, imread, imdecode, getAffineTransform, resize, warpAffine, Subdiv2D, boundingRect, fillConvexPoly, INTER_LINEAR, BORDER_REFLECT_101
-import numpy as np
-# import facePoints
 import sys
 import os
 import dlib
-#import glob
-import numpy as np
-#from skimage import io
 
+from cv2 import imwrite, imread, imdecode, getAffineTransform, resize, warpAffine, Subdiv2D,\
+    boundingRect, fillConvexPoly, INTER_LINEAR, BORDER_REFLECT_101
+
+import numpy as np
 from flask import Flask, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
 
+FILE_SAVE_ERROR = 2
+MODEL_ERROR = 1
+FINAL_DEFAULT_IMAGE_SIZE = (600, 800)
+FACE_FEATURES_MODEL_PATH = "predictor.dat"
 
 
-def doCropping(theImage1,theImage2):
-    if(isinstance(theImage1,str)):
-        img1=imread(theImage1)
-    else:
-        img1=imdecode(np.fromstring(theImage1.read(), np.uint8),1)
-    if(isinstance(theImage2,str)):
-        img2=imread(theImage2)
-    else:
-        img2=imdecode(np.fromstring(theImage2.read(), np.uint8),1)
-    size1=img1.shape
-    size2=img2.shape
-    diff0=(size1[0]-size2[0])//2
-    diff1=(size1[1]-size2[1])//2
-    avg0=(size1[0]+size2[0])//2
-    avg1=(size1[1]+size2[1])//2
-    if(size1[0]==size2[0] and size1[1]==size2[1]):
-        print("wow")
-        return [img1,img2]
-    # elif(size1[0]<=size2[0] and size1[1]<=size2[1]):
-    #     scale0=size1[0]/size2[0]
-    #     scale1=size1[1]/size2[1]
-    #     if(scale0>scale1):
-    #         res=resize(img2,size1,img1, scale0,scale0,interpolation=INTER_AREA)
-    #     else:
-    #         res=resize(img2,size1, img1,scale1,scale1,interpolation=INTER_AREA)
-    #     return doCroppingHelp(img1,res)
-    # elif(size1[0]>=size2[0] and size1[1]>=size2[1]):
-    #     scale0=size2[0]/size1[0]
-    #     scale1=size2[1]/size1[1]
-    #     if(scale0>scale1):
-    #         res=resize(img1,img2, size2,scale0,scale0,interpolation=INTER_AREA)
-    #     else:
-    #         res=resize(img1,img2, size2,scale1,scale1,interpolation=INTER_AREA)
-    #     return doCroppingHelp(res,img2)
-    # elif(size1[0]>=size2[0] and size1[1]<=size2[1]):
-    #     return [img1[diff0:avg0,:],img2[:,-diff1:avg1]]
-    # else:
-    #     return [img1[:,diff1:avg1],img2[-diff0:avg0,:]]
-
-def doCroppingHelp(img1,img2):
-    size1=img1.size
-    size2=img2.size
-    diff0=(size1[0]-size2[0])//2
-    diff1=(size1[1]-size2[1])//2
-    avg0=(size1[0]+size2[0])//2
-    avg1=(size1[1]+size2[1])//2
-    if(size1[0]==size2[0] and size1[1]==size2[1]):
-        return [img1,img2]
-    elif(size1[0]<=size2[0] and size1[1]<=size2[1]):
-        return [img1,img2[-diff0:avg0,-diff1:avg1]]
-    elif(size1[0]>=size2[0] and size1[1]>=size2[1]):
-        return [img1[diff0:avg0,diff1:avg1],img2]
-    elif(size1[0]>=size2[0] and size1[1]<=size2[1]):
-        return [img1[diff0:avg0,:],img2[:,-diff1:avg1]]
-    else:
-        return [img1[:,diff1:avg1],img2[-diff0:avg0,:]]
-
-def makeCorrespondence(thePredictor,theImage1,theImage2):
-
-    # Detect the points of face.
-    predictor_path = thePredictor
+def make_correspondence(predictor_path, first_input_image, second_input_image):
+    ''' Uses a dlib trained model to predict the coordinates features in input faces
+    input : a path to a dlib trained model and two face images
+    output: two sets of points corresponding to the location of features
+    like eyes and noses in the input images
+    '''
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(predictor_path)
-
+    predictor_model = dlib.shape_predictor(predictor_path)
     # Setting up some initial values.
-    #theImage1 = cvtColor(theim)
-    array = np.zeros((68,2))
-    size=(0,0)
-    imgList= [theImage1, theImage2]
-    list1=[]
-    list2=[]
-    j=1
+    size = (0, 0)
+    list_of_images = [first_input_image, second_input_image]
+    first_image_face_features_points = []
+    second_image_features_points = []
+    j = 1
+    max_number_of_learned_points = 68
 
-    for img in imgList:
-
-        size=(img.shape[0],img.shape[1])
-        if(j==1):
-            currList=list1
+    for img in list_of_images:
+        size = (img.shape[0], img.shape[1])
+        if j == 1:
+            currList = first_image_face_features_points
         else:
-            currList=list2
+            currList = second_image_features_points
 
         # Ask the detector to find the bounding boxes of each face. The 1 in the
         # second argument indicates that we should upsample the image 1 time. This
         # will make everything bigger and allow us to detect more faces.
         # Also give error if face is not found.
         dets = detector(img, 1)
-        if(len(dets)==0):
-            if(isinstance(f,str)):
-                return [[0,f],0,0,0,0,0]
-            else:
-                return [[0,"No. "+str(j)],0,0,0,0,0]
-        j=j+1
+        j += 1
 
         for k, d in enumerate(dets):
-            
             # Get the landmarks/parts for the face in box d.
-            shape = predictor(img, d)
-            for i in range(0,68):
-                currList.append((int(shape.part(i).x),int(shape.part(i).y)))
-                array[i][0]+=shape.part(i).x
-                array[i][1]+=shape.part(i).y
-            currList.append((1,1))
-            currList.append((size[1]-1,1))
-            currList.append(((size[1]-1)//2,1))
-            currList.append((1,size[0]-1))
-            currList.append((1,(size[0]-1)//2))
-            currList.append(((size[1]-1)//2,size[0]-1))
-            currList.append((size[1]-1,size[0]-1))
-            currList.append(((size[1]-1)//2,(size[0]-1)//2))
+            shape = predictor_model(img, d)
+            for i in range(0, max_number_of_learned_points):
+                currList.append((int(shape.part(i).x), int(shape.part(i).y)))
+            currList.append((1, 1))
+            currList.append((size[1]-1, 1))
+            currList.append(((size[1]-1)//2, 1))
+            currList.append((1, size[0]-1))
+            currList.append((1, (size[0]-1)//2))
+            currList.append(((size[1]-1)//2, size[0]-1))
+            currList.append((size[1]-1, size[0]-1))
+            currList.append(((size[1]-1)//2, (size[0]-1)//2))
 
-    narray=array/2
-    narray=np.append(narray,[[1,1]],axis=0)
-    narray=np.append(narray,[[size[1]-1,1]],axis=0)
-    narray=np.append(narray,[[(size[1]-1)//2,1]],axis=0)
-    narray=np.append(narray,[[1,size[0]-1]],axis=0)
-    narray=np.append(narray,[[1,(size[0]-1)//2]],axis=0)
-    narray=np.append(narray,[[(size[1]-1)//2,size[0]-1]],axis=0)
-    narray=np.append(narray,[[size[1]-1,size[0]-1]],axis=0)
-    narray=np.append(narray,[[(size[1]-1)//2,(size[0]-1)//2]],axis=0)
+    return [first_image_face_features_points, second_image_features_points]
 
-    return [size,imgList[0],imgList[1],list1,list2,narray]
 
-def rect_contains(rect, point) :
-    '''checks if a points is contains within the bounds
-    of a rectangle plane'''
-
-    if point[0] < rect[0] :
+def rect_contains(rectangle, point):
+    '''checks if a point is contained within the bounds
+    of a rectangle plane
+    '''
+    if point[0] < rectangle[0]:
         return False
-    elif point[1] < rect[1] :
+    elif point[1] < rectangle[1]:
         return False
-    elif point[0] > rect[2] :
+    elif point[0] > rectangle[2]:
         return False
-    elif point[1] > rect[3] :
+    elif point[1] > rectangle[3]:
         return False
     return True
 
-def draw_delaunay(subdiv,dictionary1, r) :
+
+def draw_delaunay(subdiv, dictionary, rectangle):
     '''uses a brute force method to find which points fall under delaunay triangulation
-    constraints'''
-
-    trianglePoints =[]
+    constraints
+    '''
+    triangulation_points = []
     triangleList = subdiv.getTriangleList()
-    
-    for t in triangleList :
-        pt1 = (int(t[0]), int(t[1]))
-        pt2 = (int(t[2]), int(t[3]))
-        pt3 = (int(t[4]), int(t[5]))
-        if rect_contains(r, pt1) and rect_contains(r, pt2) and rect_contains(r, pt3) :
-            trianglePoints.append((dictionary1[pt1],dictionary1[pt2],dictionary1[pt3]))
-    
+    for final_triangle in triangleList:
+        point_1 = (int(final_triangle[0]), int(final_triangle[1]))
+        point_2 = (int(final_triangle[2]), int(final_triangle[3]))
+        point_3 = (int(final_triangle[4]), int(final_triangle[5]))
+        if rect_contains(rectangle, point_1) and rect_contains(rectangle, point_2) and \
+                rect_contains(rectangle, point_3):
+            triangulation_points.append(
+                (dictionary[point_1], dictionary[point_2], dictionary[point_3]))
 
-    return trianglePoints
+    return triangulation_points
 
-def makeDelaunay(image, listOfPoints):
 
+def make_delaunay(image, list_of_points):
     '''the input is an image file read in by opencv and a list of average points
     the output is the final triangulation points in a list of tuples
     '''
     size = image.shape
-    rect = (0, 0, size[0], size[0])
+    rectangle = (0, 0, size[0], size[0])
     # Create an instance of Subdiv2D.
-    subdiv = Subdiv2D(rect)
-
-    # Make a points list and a searchable dictionary. 
-    theList= listOfPoints
-    points=[(int(x[0]),int(x[1])) for x in theList] #making a tuple of points
-    
+    subdiv = Subdiv2D(rectangle)
+    # Make a points list and a searchable dictionary.
+    points = [(int(x[0]), int(x[1]))
+              for x in list_of_points]  # making a tuple of points
     #the following line might still need some testing
-    dictionary={x[0]:x[1] for x in list(zip(points,range(len(points))))}
-   
+    dictionary = {x[0]: x[1] for x in list(zip(points, range(len(points))))}
     # Insert points into subdiv
-    for p in points :
+    for p in points:
         subdiv.insert(p)
-        
     # Make a delaunay triangulation list.
-    return draw_delaunay(subdiv,dictionary, rect)
+    return draw_delaunay(subdiv, dictionary, rectangle)
 
 
-# # Read points from text file
-# def readPoints(path) :
-#     # Create an array of points.
-#     # points = []
-#     # # Read points
-#     # with open(path) as file :
-#     #     for line in file :
-#     #         x, y = line.split()
-#     #         points.append((int(x), int(y)))
-
-#     return points
-
-# Apply affine transform calculated using srcTri and dstTri to src and
-# output an image of size.
-def applyAffineTransform(src, srcTri, dstTri, size) :
-    
-    # Given a pair of triangles, find the affine transform.
-    warpMat = getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
-    
+def apply_affine_transform(src, src_triangle, dst_triangle, size):
+    '''calculates an affline matrix using input triangles and uses that matrix
+    to apply an affline transform to the input image to produce a final size big image
+    '''
+    warp_mat = getAffineTransform(np.float32(
+        src_triangle), np.float32(dst_triangle))
     # Apply the Affine Transform just found to the src image
-    dst = warpAffine( src, warpMat, (size[0], size[1]), None, flags=INTER_LINEAR, borderMode=BORDER_REFLECT_101 )
+    dst = warpAffine(src, warp_mat, (size[0], size[1]), None,
+                     flags=INTER_LINEAR, borderMode=BORDER_REFLECT_101)
 
     return dst
 
 
-# Warps and alpha blends triangular regions from img1 and img2 to img
-def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
-
+def morph_triangle(image_1, image_2, img, triangle_1, triangle_2, final_triangle, morphing_rate):
+    '''given three triangles, a morphing rate, and two images, find the corresponding
+    triangular regions wrap them around the input images and blend the result into the
+    the final image according to the morphing rate
+    '''
     # Find bounding rectangle for each triangle
-    r1 = boundingRect(np.float32([t1]))
-    r2 = boundingRect(np.float32([t2]))
-    r = boundingRect(np.float32([t]))
-
+    rectangle_1 = boundingRect(np.float32([triangle_1]))
+    rectangle_2 = boundingRect(np.float32([triangle_2]))
+    rectangle = boundingRect(np.float32([final_triangle]))
 
     # Offset points by left top corner of the respective rectangles
-    t1Rect = []
-    t2Rect = []
-    tRect = []
-
+    triangle_1_rect = []
+    triangle_2_rect = []
+    final_triangle_rect = []
 
     for i in range(0, 3):
-        tRect.append(((t[i][0] - r[0]),(t[i][1] - r[1])))
-        t1Rect.append(((t1[i][0] - r1[0]),(t1[i][1] - r1[1])))
-        t2Rect.append(((t2[i][0] - r2[0]),(t2[i][1] - r2[1])))
-
+        final_triangle_rect.append(
+            ((final_triangle[i][0] - rectangle[0]), (final_triangle[i][1] - rectangle[1])))
+        triangle_1_rect.append(
+            ((triangle_1[i][0] - rectangle_1[0]), (triangle_1[i][1] - rectangle_1[1])))
+        triangle_2_rect.append(
+            ((triangle_2[i][0] - rectangle_2[0]), (triangle_2[i][1] - rectangle_2[1])))
 
     # Get mask by filling triangle
-    mask = np.zeros((r[3], r[2], 3), dtype = np.float32)
-    fillConvexPoly(mask, np.int32(tRect), (1.0, 1.0, 1.0), 16, 0)
+    mask = np.zeros((rectangle[3], rectangle[2], 3), dtype=np.float32)
+    fillConvexPoly(img=mask, points=np.int32(final_triangle_rect),
+                   color=(1.0, 1.0, 1.0), lineType=16, shift=0)
 
     # Apply warpImage to small rectangular patches
-    img1Rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
-    img2Rect = img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]]
+    img_1_rectangle = image_1[rectangle_1[1]:rectangle_1[1] +
+                              rectangle_1[3], rectangle_1[0]:rectangle_1[0] + rectangle_1[2]]
+    img_2_rectangle = image_2[rectangle_2[1]:rectangle_2[1] +
+                              rectangle_2[3], rectangle_2[0]:rectangle_2[0] + rectangle_2[2]]
 
-    size = (r[2], r[3])
-    warpImage1 = applyAffineTransform(img1Rect, t1Rect, tRect, size)
-    warpImage2 = applyAffineTransform(img2Rect, t2Rect, tRect, size)
+    size = (rectangle[2], rectangle[3])
+    warp_image_1 = apply_affine_transform(
+        img_1_rectangle, triangle_1_rect, final_triangle_rect, size)
+    warap_image_2 = apply_affine_transform(
+        img_2_rectangle, triangle_2_rect, final_triangle_rect, size)
 
     # Alpha blend rectangular patches
-    imgRect = (1.0 - alpha) * warpImage1 + alpha * warpImage2
+    img_rect = (1.0 - morphing_rate) * warp_image_1 + \
+        morphing_rate * warap_image_2
 
     # Copy triangular region of the rectangular patch to the output image
-    img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] = img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]] * ( 1 - mask ) + imgRect * mask
+    img[rectangle[1]:rectangle[1]+rectangle[3], rectangle[0]:rectangle[0]+rectangle[2]] = \
+        img[rectangle[1]:rectangle[1]+rectangle[3], rectangle[0]:rectangle[0]+rectangle[2]] *\
+        (1 - mask) + img_rect * mask
 
 
-def makeMorph(imageFileName1, imageFileName2):
+def make_morph(image_filename_1, image_filename_2, morphing_rate):
+    '''using all the previous helper function and the pretained morphing model
+    to morph two input images into a final morphed image
+    and  save it in the directory where this file is currently sitting
+    '''
+    image_1 = imread(image_filename_1)
+    image_2 = imread(image_filename_2)
 
-    # filename1 = 'kobe_bryant.jpg'
-    # filename2 = 'donald_trump.jpg'
-    # we will implemement this once our model is ready
-    # userInput = input("Input a morphing rate between 0 and 1:")
-    # alpha = float(userInput)
-    # Read images
-    filename1 = imageFileName1
-    filename2 = imageFileName2
-    alpha = 0.5
-    img1 = imread(filename1)
-    img2 = imread(filename2)
+    img_1 = resize(image_1, FINAL_DEFAULT_IMAGE_SIZE)
+    img_2 = resize(image_2, FINAL_DEFAULT_IMAGE_SIZE)
 
-    img1 = resize(img1,(600,800))
-    img2 = resize(img2,(600,800))
-
-    # size1 = img1.shape
-    # size2 = img2.shape
-
-    # if(size1[0]==size2[0] and size1[1]==size2[1]):
-    #     print("Hey")
-    features = makeCorrespondence("predictor.dat",img1,img2)
+    features = make_correspondence(FACE_FEATURES_MODEL_PATH, img_1, img_2)
     # Convert Mat to float data type
-    img1 = np.float32(img1)
-    img2 = np.float32(img2)
+    image_1 = np.float32(img_1)
+    image_2 = np.float32(img_2)
 
-    # Read array of corresponding points
-    # points1 = readPoints(filename1 + '.txt')
-    # points2 = readPoints(filename2 + '.txt')
-    #features = makeCorrespondence("shape_predictor_68_face_landmarks.dat",img1,img2)
-    points1 = features[3]
-    points2 = features[4]
+    first_image_points = features[0]
+    second_image_points = features[1]
     points = []
 
-    # Compute weighted average point coordinates
-    for i in range(0, len(points1)):
-        x = ( 1 - alpha ) * points1[i][0] + alpha * points2[i][0]
-        y = ( 1 - alpha ) * points1[i][1] + alpha * points2[i][1]
-        points.append((x,y))
+    if len(first_image_points) == 0 or len(second_image_points) == 0:
+        return -MODEL_ERROR
+
+    for i in range(0, len(first_image_points)):
+        x = (1 - morphing_rate) * \
+            first_image_points[i][0] + morphing_rate * \
+            second_image_points[i][0]
+        y = (1 - morphing_rate) * \
+            first_image_points[i][1] + morphing_rate * \
+            second_image_points[i][1]
+        points.append((x, y))
+
     # Allocate space for final output
-    imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
+    image_morph = np.zeros(img_1.shape, dtype=image_1.dtype)
 
-    trianglePoints = makeDelaunay(img2, points)
-    for i in range(len(trianglePoints)):
-
-        x,y,z = trianglePoints[i]
-        
+    triangulation_points = make_delaunay(image_2, points)
+    for i in range(len(triangulation_points)):
+        x, y, z = triangulation_points[i]
         x = int(x)
         y = int(y)
         z = int(z)
-        
-        t1 = [points1[x], points1[y], points1[z]]
-        t2 = [points2[x], points2[y], points2[z]]
-        t = [ points[x], points[y], points[z] ]
-
+        triangle_1 = [first_image_points[x],
+                      first_image_points[y], first_image_points[z]]
+        triangle_2 = [second_image_points[x],
+                      second_image_points[y], second_image_points[z]]
+        final_triangle = [points[x], points[y], points[z]]
         # Morph one triangle at a time.
-        morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
-    fileName = os.path.basename(imageFileName1).split(".")[0] + os.path.basename(imageFileName2)
-    
-    returnValue = imwrite(fileName, imgMorph)
+        morph_triangle(image_1, image_2, image_morph, triangle_1,
+                       triangle_2, final_triangle, morphing_rate)
+    fileName = os.path.basename(image_filename_1).split(
+        ".")[0] + os.path.basename(image_filename_2)
 
-    if (returnValue):
-
-        return fileName
-
-    else:
-
-        return "morphedimage.jpg"
-    
-
+    if imwrite(fileName, image_morph) < 0:
+        return -FILE_SAVE_ERROR
+    return fileName
