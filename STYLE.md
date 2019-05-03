@@ -1,7 +1,7 @@
 # Code Style
 ## General Format Checking
 
-we run **pylint** to run our python file before commit to github. This allows us to check our code style on python. This allow us to do following features:
+we run `pylint` to run our python file before commit to github. This allows us to check our code style on python. This allow us to do following features:
 * Checking the length of each line
 * Checking that variable names are well-formed according to the project's coding standard
 * Checking that declared interfaces are truly implemented
