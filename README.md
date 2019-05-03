@@ -31,15 +31,9 @@ All of the css, js, and fonts files help style the index.html are located in sta
 Uploading the vague facial images or the images which contains non-human or multiple human faces to the webapp, which are unappropriate behaviors. The web app should return a error message correspondingly to warm the user to give out a correct input.
 
 ### Some Invalid example
+Since "FaceMorph" only recognize the single front human facial image, then the following side face image, the multiple face image, and the non-human face image are invalid input to the webapp.
 
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
+![cat](https://github.com/hmc-elephant-s18/FaceMorph/cat.jpg)
 
 ## Built With
 
