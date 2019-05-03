@@ -44,7 +44,7 @@ def foo(x,y):
 ## Html
 * Two line spaces between `section`.
 * One line spaces between  block of `div`
-* Putting a `<-- Comment -->` a line above section start
+* Putting a `<-- Comment -->` a line above the start of each section
 * Input css file first, content second, and javascript at the end
 
 For example:
