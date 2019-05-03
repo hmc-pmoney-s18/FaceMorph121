@@ -23,16 +23,6 @@ def get_file(filename):
                      mimetype='image/jpg', last_modified=True)
 
 
-@app.route('/<filename>', methods=['GET'])
-def retrieve_file(filename):
-    """ Taking a string of filename as input,
-        retrieving the file location though filename
-        return a image file based on the location
-    """
-    return send_file('static'/filename, as_attachment=True,
-                     mimetype='image/jpg', last_modified=True)
-
-
 @app.route('/<filename>', methods=['GET', 'POST'])
 def download_file(filename):
     """ Taking a string of filename as input,
