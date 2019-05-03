@@ -33,7 +33,10 @@ Uploading the vague facial images or the images which contains non-human or mult
 ### Some Invalid example
 Since "FaceMorph" only recognize the single front human facial image, then the following side face image, the multiple face image, and the non-human face image are invalid input to the webapp.
 
-![cat](https://github.com/hmc-elephant-s18/FaceMorph/blob/master/cat.jpg)
+<img src="https://github.com/hmc-elephant-s18/FaceMorph/blob/master/cat.jpg" width="300" height="300">
+<img src="https://github.com/hmc-elephant-s18/FaceMorph/blob/master/strange.jpg" width="300" height="300">
+<img src="https://github.com/hmc-elephant-s18/FaceMorph/blob/master/avenger.jpg" width="300" height="300">
+
 
 ## Built With
 
