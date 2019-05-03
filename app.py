@@ -1,8 +1,9 @@
 import os
-import flask
 
+import flask
 from flask import Flask, render_template, redirect, url_for, \
     request, send_from_directory, flash, send_file
+
 from werkzeug import secure_filename
 import faceMorph
 
@@ -14,8 +15,9 @@ app.config.from_object(Config)
 
 @app.route('/<filename>', methods=['GET'])
 def get_file(filename):
-    """ Taking a string of filename as input
-    
+    """ Taking a string of filename as input,
+        retrieving the file location though filename
+        return a image file based on the location
     """
     return send_file(filename, as_attachment=True,
                      mimetype='image/jpg', last_modified=True)
@@ -23,22 +25,41 @@ def get_file(filename):
 
 @app.route('/<filename>', methods=['GET'])
 def retrieve_file(filename):
+    """ Taking a string of filename as input,
+        retrieving the file location though filename
+        return a image file based on the location
+    """
     return send_file('static'/filename, as_attachment=True,
                      mimetype='image/jpg', last_modified=True)
 
 
 @app.route('/<filename>', methods=['GET', 'POST'])
 def download_file(filename):
+    """ Taking a string of filename as input,
+        retrieving the file location though filename
+        return a image file based on the location
+    """
     return send_file(filename, as_attachment=True)
 
 
 @app.route('/')
 def index():
+    """ Setting up the starting page of webapp
+    """
     return render_template('index.html')
 
 
 @app.route('/', methods=['POST'])
 def upload_file():
+    """ Taking two images file and a morphing rate
+        as inputs through a POST request in index.html
+        and uploading the images to the server.
+        Then pass the url of two images and morphing rate
+        to makeMorph function in faceMorph.py to produce
+        a morphed image.
+        If morph succeeds, return url of morphed result and
+        both input images and the name of both input images.
+    """
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file1' not in request.files:
@@ -62,6 +83,9 @@ def upload_file():
 
         morph_rate = int(request.values['morph1'])/100
 
+        if type(morph_rate) != float or morph_rate > 1 or morph_rate < 0:
+            return render_template('index.html')
+
         #work on this to make it similar to our part
         if file1 and allowed_file(file1.filename) and file2 and allowed_file(file2.filename):
             filename1 = secure_filename(file1.filename)
@@ -73,9 +97,10 @@ def upload_file():
 
             morph_result = faceMorph.make_morph(save_to1, save_to2, morph_rate)
             if (type(morph_result) != str):
-                flash("The model cannot learn one of the images points. Make sure you upload a clear human face like the examples in about page")
-                return render_template('index.html', morph="warning.jpg", filename="warning.jpg",  f1_name=filename1.split(".")[0],
-                                       f2_name=filename2.split(".")[0])
+                flash("The model cannot learn one of the images points. Make sure you upload\
+                a clear human face like the examples in instructions page")
+                return render_template('index.html', morph="warning.jpg", filename="warning.jpg",\
+                      f1_name=filename1.split(".")[0], f2_name=filename2.split(".")[0])
             return render_template('index.html', morph=morph_result,
                                    filename=morph_result, f1=filename1, f2=filename2,
                                    f1_name=filename1.split(".")[0],
@@ -92,7 +117,7 @@ app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 
 
 def allowed_file(filename):
-    """Taking a string as the input and check filename extension
+    """Takes in a string as the input and check filename extension
         Return true if filename have correct extensions
     """
     return '.' in filename and \
